@@ -1,41 +1,38 @@
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const port = process.env.PORT || 8000;
-const mongoURI = process.env.MONGO_URI;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const express = require("express");
+const dotenv = require("dotenv").config();
+const http = require("http");
+const mongoose = require("mongoose");
+const cors = require("cors");
+
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: "*",
+ 
+}));
+
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 
-const client = new MongoClient(mongoURI, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  },
-});
+const PORT = process.env.PORT || 8000;
 
-const run = async () => {
-try{
-  await client.connect();
+const server = http.createServer(app);
 
-   await client.db("admin").command({ ping: 1 });
-  console.log(
-    "Pinged your deployment. You successfully connected to MongoDB!"
-  );
-}
-finally{
+mongoose.connect(process.env.MONGO_URI
+  , { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => {
+    console.log("Server connected to MongoDB");
+    server.listen(PORT, () => {
+      console.log(`Server is listening on PORT ${PORT}`);
+    });
 
-}
-}
 
-run().catch(error => console.log)
-app.get('/', (req, res) => {
-  res.send('Hello from Express!');
-});
-
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+  app.get('/', (req, res) => {
+    res.send('Hello from Express!');
+  });
+  })
+  .catch((err) => {
+    console.error("Error connecting to MongoDB:", err);
+    process.exit(1);
+  });
